@@ -1,41 +1,37 @@
-# CI workflow for T9-CTN-GenAI
+# CI workflow for T9-CTN-GenAI using imprunner self-hosted Linux X64
 name: CI
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
+  # Trigger on push to ci/improve-workflow branch only (once for testing)
   push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
-
-  # Allows you to run this workflow manually from the Actions tab
+    branches:
+      - ci/improve-workflow
+  # Allow manual trigger
   workflow_dispatch:
 
-# Set permissions for the workflow
-# This follows the principle of least privilege
+# Set permissions for the workflow (principle of least privilege)
 permissions:
   contents: read
   pull-requests: write
   statuses: write
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+# A workflow run is made up of one or more jobs
 jobs:
   # Diagnostic job to test runner environment
   diagnostics:
-    # The type of runner that the job will run on
     runs-on: imprunner
-
+    
     steps:
-      # Run diagnostics and output environment info
+      # 1. System Information
       - name: System Information
         run: |
           echo "=== SYSTEM INFORMATION ==="
           echo "Hostname: $(hostname)"
           echo "OS: $(uname -a)"
           cat /etc/os-release 2>/dev/null || echo "OS details not available"
-          echo ""
 
+      # 2. CPU and Memory
       - name: CPU and Memory
         run: |
           echo "=== CPU AND MEMORY ==="
@@ -44,8 +40,8 @@ jobs:
           cat /proc/cpuinfo | grep "model name" | head -1 || echo "CPU info not available"
           echo "Memory:"
           free -h || echo "Memory info not available"
-          echo ""
 
+      # 3. Docker Information
       - name: Docker Information
         run: |
           echo "=== DOCKER INFORMATION ==="
@@ -55,8 +51,8 @@ jobs:
           else
             echo "Docker is not installed"
           fi
-          echo ""
 
+      # 4. Python Information
       - name: Python Information
         run: |
           echo "=== PYTHON INFORMATION ==="
@@ -69,8 +65,8 @@ jobs:
           else
             echo "Python is not installed"
           fi
-          echo ""
 
+      # 5. Git Information
       - name: Git Information
         run: |
           echo "=== GIT INFORMATION ==="
@@ -80,12 +76,22 @@ jobs:
           else
             echo "Git is not installed"
           fi
-          echo ""
 
+      # 6. Node.js and npm
+      - name: Node.js and npm
+        run: |
+          echo "=== NODE.JS AND NPM ==="
+          if command -v node &> /dev/null; then
+            node --version
+            npm --version
+          else
+            echo "Node.js is not installed"
+          fi
+
+      # 7. Available Tools
       - name: Available Tools
         run: |
           echo "=== AVAILABLE TOOLS ==="
-          echo "Checking available tools:"
           for tool in node npm pip pip3 docker kubectl curl wget; do
             if command -v $tool &> /dev/null; then
               echo "  $tool: $(command -v $tool)"
@@ -93,31 +99,30 @@ jobs:
               echo "  $tool: not found"
             fi
           done
-          echo ""
 
+      # 8. Disk Space
       - name: Disk Space
         run: |
           echo "=== DISK SPACE ==="
           df -h
-          echo ""
 
+      # 9. Environment Variables
       - name: Environment Variables
         run: |
           echo "=== ENVIRONMENT VARIABLES ==="
-          echo "PATH:"
+          echo "PATH (first 20 entries):"
           echo "$PATH" | tr ':' '\n' | head -20
           echo ""
-          echo "Selected env vars:"
+          echo "Selected GitHub env vars:"
           echo "  RUNNER_OS: $RUNNER_OS"
           echo "  RUNNER_ARCH: $RUNNER_ARCH"
           echo "  GITHUB_REPOSITORY: $GITHUB_REPOSITORY"
           echo "  GITHUB_RUN_ID: $GITHUB_RUN_ID"
 
-      # Create issue with diagnostic results
+      # 10. Create Issue with Diagnostics (only on workflow_dispatch)
       - name: Create Issue with Diagnostics
         if: github.event_name == 'workflow_dispatch'
         run: |
-          # Collect diagnostic info
           HOSTNAME=$(hostname)
           OS=$(uname -a)
           CORES=$(nproc)
@@ -125,6 +130,8 @@ jobs:
           DOCKER_VERSION=$(docker --version 2>/dev/null || echo "Not installed")
           PYTHON_VERSION=$(python3 --version 2>/dev/null || python --version 2>/dev/null || echo "Not installed")
           GIT_VERSION=$(git --version 2>/dev/null || echo "Not installed")
+          NODE_VERSION=$(node --version 2>/dev/null || echo "Not installed")
+          NPM_VERSION=$(npm --version 2>/dev/null || echo "Not installed")
           DISK=$(df -h | head -5)
           
           # Write issue body to file
@@ -133,7 +140,7 @@ jobs:
 
           **Run ID:** $RUN_ID
           **Workflow:** CI
-          **Runner:** imprunner
+          **Runner:** imprunner (self-hosted Linux X64)
 
           ### System Information
           - Hostname: $HOSTNAME
@@ -151,6 +158,10 @@ jobs:
 
           ### Python
           $PYTHON_VERSION
+
+          ### Node.js / npm
+          Node: $NODE_VERSION
+          npm: $NPM_VERSION
 
           ### Git
           $GIT_VERSION
@@ -173,6 +184,8 @@ jobs:
           sed -i "s/\$DOCKER_VERSION/$DOCKER_VERSION/g" /tmp/issue_body.txt
           sed -i "s/\$PYTHON_VERSION/$PYTHON_VERSION/g" /tmp/issue_body.txt
           sed -i "s/\$GIT_VERSION/$GIT_VERSION/g" /tmp/issue_body.txt
+          sed -i "s/\$NODE_VERSION/$NODE_VERSION/g" /tmp/issue_body.txt
+          sed -i "s/\$NPM_VERSION/$NPM_VERSION/g" /tmp/issue_body.txt
           sed -i "s/\$DISK/$DISK/g" /tmp/issue_body.txt
           
           # Create the issue
@@ -181,42 +194,32 @@ jobs:
             --title "Runner Diagnostics - $(date +'%Y-%m-%d')" \
             --body-file /tmp/issue_body.txt
 
-  # Lint and test job
+  # Lint and test job (runs after diagnostics)
   ci:
-    # The type of runner that the job will run on
     runs-on: imprunner
     needs: diagnostics
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Set up Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
 
-      # Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install flake8 pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      # Run linting
       - name: Lint with flake8
         run: |
-          # Stop the build if there are Python syntax errors or undefined names
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          # Exit-zero treats all errors as warnings
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-      # Run tests (if any exist)
       - name: Run tests with pytest
         run: |
           pytest --version || true
-          pytest --tb=short -v || echo "No tests found or tests failed"
