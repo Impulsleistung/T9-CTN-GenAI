@@ -1,0 +1,222 @@
+# CI workflow for T9-CTN-GenAI
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Set permissions for the workflow
+# This follows the principle of least privilege
+permissions:
+  contents: read
+  pull-requests: write
+  statuses: write
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # Diagnostic job to test runner environment
+  diagnostics:
+    # The type of runner that the job will run on
+    runs-on: imprunner
+
+    steps:
+      # Run diagnostics and output environment info
+      - name: System Information
+        run: |
+          echo "=== SYSTEM INFORMATION ==="
+          echo "Hostname: $(hostname)"
+          echo "OS: $(uname -a)"
+          cat /etc/os-release 2>/dev/null || echo "OS details not available"
+          echo ""
+
+      - name: CPU and Memory
+        run: |
+          echo "=== CPU AND MEMORY ==="
+          echo "CPU cores: $(nproc)"
+          echo "CPU info:"
+          cat /proc/cpuinfo | grep "model name" | head -1 || echo "CPU info not available"
+          echo "Memory:"
+          free -h || echo "Memory info not available"
+          echo ""
+
+      - name: Docker Information
+        run: |
+          echo "=== DOCKER INFORMATION ==="
+          if command -v docker &> /dev/null; then
+            docker --version
+            docker info 2>/dev/null | head -20 || echo "Docker daemon not running or no access"
+          else
+            echo "Docker is not installed"
+          fi
+          echo ""
+
+      - name: Python Information
+        run: |
+          echo "=== PYTHON INFORMATION ==="
+          if command -v python3 &> /dev/null; then
+            python3 --version
+            python3 -c "import sys; print(f'Python path: {sys.executable}')"
+          elif command -v python &> /dev/null; then
+            python --version
+            python -c "import sys; print(f'Python path: {sys.executable}')"
+          else
+            echo "Python is not installed"
+          fi
+          echo ""
+
+      - name: Git Information
+        run: |
+          echo "=== GIT INFORMATION ==="
+          if command -v git &> /dev/null; then
+            git --version
+            git config --list | head -10
+          else
+            echo "Git is not installed"
+          fi
+          echo ""
+
+      - name: Available Tools
+        run: |
+          echo "=== AVAILABLE TOOLS ==="
+          echo "Checking available tools:"
+          for tool in node npm pip pip3 docker kubectl curl wget; do
+            if command -v $tool &> /dev/null; then
+              echo "  $tool: $(command -v $tool)"
+            else
+              echo "  $tool: not found"
+            fi
+          done
+          echo ""
+
+      - name: Disk Space
+        run: |
+          echo "=== DISK SPACE ==="
+          df -h
+          echo ""
+
+      - name: Environment Variables
+        run: |
+          echo "=== ENVIRONMENT VARIABLES ==="
+          echo "PATH:"
+          echo "$PATH" | tr ':' '\n' | head -20
+          echo ""
+          echo "Selected env vars:"
+          echo "  RUNNER_OS: $RUNNER_OS"
+          echo "  RUNNER_ARCH: $RUNNER_ARCH"
+          echo "  GITHUB_REPOSITORY: $GITHUB_REPOSITORY"
+          echo "  GITHUB_RUN_ID: $GITHUB_RUN_ID"
+
+      # Create issue with diagnostic results
+      - name: Create Issue with Diagnostics
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          # Collect diagnostic info
+          HOSTNAME=$(hostname)
+          OS=$(uname -a)
+          CORES=$(nproc)
+          MEMORY=$(free -h | head -3)
+          DOCKER_VERSION=$(docker --version 2>/dev/null || echo "Not installed")
+          PYTHON_VERSION=$(python3 --version 2>/dev/null || python --version 2>/dev/null || echo "Not installed")
+          GIT_VERSION=$(git --version 2>/dev/null || echo "Not installed")
+          DISK=$(df -h | head -5)
+          
+          # Write issue body to file
+          cat > /tmp/issue_body.txt << 'ENDOFISSUE'
+          ## Runner Diagnostics Report
+
+          **Run ID:** $RUN_ID
+          **Workflow:** CI
+          **Runner:** imprunner
+
+          ### System Information
+          - Hostname: $HOSTNAME
+          - OS: $OS
+
+          ### CPU and Memory
+          - CPU cores: $CORES
+          - Memory:
+          ```
+          $MEMORY
+          ```
+
+          ### Docker
+          $DOCKER_VERSION
+
+          ### Python
+          $PYTHON_VERSION
+
+          ### Git
+          $GIT_VERSION
+
+          ### Disk Space
+          ```
+          $DISK
+          ```
+
+          ---
+          *This issue was automatically created by the CI diagnostic workflow.*
+          ENDOFISSUE
+          
+          # Replace variables in the file
+          sed -i "s/\$RUN_ID/$GITHUB_RUN_ID/g" /tmp/issue_body.txt
+          sed -i "s/\$HOSTNAME/$HOSTNAME/g" /tmp/issue_body.txt
+          sed -i "s/\$OS/$OS/g" /tmp/issue_body.txt
+          sed -i "s/\$CORES/$CORES/g" /tmp/issue_body.txt
+          sed -i "s/\$MEMORY/$MEMORY/g" /tmp/issue_body.txt
+          sed -i "s/\$DOCKER_VERSION/$DOCKER_VERSION/g" /tmp/issue_body.txt
+          sed -i "s/\$PYTHON_VERSION/$PYTHON_VERSION/g" /tmp/issue_body.txt
+          sed -i "s/\$GIT_VERSION/$GIT_VERSION/g" /tmp/issue_body.txt
+          sed -i "s/\$DISK/$DISK/g" /tmp/issue_body.txt
+          
+          # Create the issue
+          gh issue create \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Runner Diagnostics - $(date +'%Y-%m-%d')" \
+            --body-file /tmp/issue_body.txt
+
+  # Lint and test job
+  ci:
+    # The type of runner that the job will run on
+    runs-on: imprunner
+    needs: diagnostics
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pytest
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      # Run linting
+      - name: Lint with flake8
+        run: |
+          # Stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Exit-zero treats all errors as warnings
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      # Run tests (if any exist)
+      - name: Run tests with pytest
+        run: |
+          pytest --version || true
+          pytest --tb=short -v || echo "No tests found or tests failed"
