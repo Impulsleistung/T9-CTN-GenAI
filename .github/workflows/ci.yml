@@ -3,10 +3,10 @@ name: CI
 
 # Controls when the workflow will run
 on:
-  # Trigger on push to ci/improve-workflow branch only (once for testing)
+  # Trigger on push to all branches except main
   push:
-    branches:
-      - ci/improve-workflow
+    branches-ignore:
+      - main
   # Allow manual trigger
   workflow_dispatch:
 
@@ -15,6 +15,7 @@ permissions:
   contents: read
   pull-requests: write
   statuses: write
+  issues: write
 
 # A workflow run is made up of one or more jobs
 jobs:
@@ -223,3 +224,40 @@ jobs:
       - name: Run tests with pytest
         run: |
           pytest --version || true
+
+      # 11. Create Summary Issue (only on push events)
+      - name: Create Summary Issue
+        if: github.event_name == 'push'
+        run: |
+          # Get branch and commit info
+          BRANCH_NAME="${{ github.ref_name }}"
+          COMMIT_SHA="${{ github.sha }}"
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          
+          # Write issue body to file
+          cat > /tmp/summary_issue_body.txt << 'ENDOFSUMMARY'
+          ## CI Summary Report
+
+          **Branch:** $BRANCH_NAME
+          **Commit:** $COMMIT_SHA
+          **Run URL:** $RUN_URL
+
+          ### Commit Message
+          $COMMIT_MSG
+
+          ---
+          *This issue was automatically created by the CI workflow on push to a non-main branch.*
+          ENDOFSUMMARY
+          
+          # Replace variables in the file
+          sed -i "s/\$BRANCH_NAME/$BRANCH_NAME/g" /tmp/summary_issue_body.txt
+          sed -i "s/\$COMMIT_SHA/$COMMIT_SHA/g" /tmp/summary_issue_body.txt
+          sed -i "s|\$COMMIT_MSG|$COMMIT_MSG|g" /tmp/summary_issue_body.txt
+          sed -i "s|\$RUN_URL|$RUN_URL|g" /tmp/summary_issue_body.txt
+          
+          # Create the issue
+          gh issue create \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "CI Summary - $BRANCH_NAME - $(date +'%Y-%m-%d')" \
+            --body-file /tmp/summary_issue_body.txt
