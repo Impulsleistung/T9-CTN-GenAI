@@ -95,20 +95,6 @@ This runner is referenced by the following workflow files in `.github/workflows/
   4. `Lint with flake8` — stops on syntax errors / undefined names; treats all other errors as warnings (max complexity 10, max line length 127)
   5. `Run tests with pytest` — runs `pytest --tb=short -v`; tolerates no-test scenario
 
-### 4.2 `test.yml` — Test Runner Workflow
-
-- **Workflow name:** `Test Runner`
-- **File:** `.github/workflows/test.yml` (17 lines, 300 B)
-- **Triggers:** `workflow_dispatch` only (manual)
-- **Permissions:** `{}` (empty — no token permissions granted)
-- **Jobs using this runner:**
-
-#### Job: `test`
-- `runs-on: imprunner`
-- **Purpose:** Minimal smoke test to verify the runner responds
-- **Steps:**
-  1. `Test step` — echoes `Testing runner...`, hostname, OS (`uname -a`), and `Done!`
-
 ---
 
 ## 5. Workflow Run History (as of 2026-02-23)
