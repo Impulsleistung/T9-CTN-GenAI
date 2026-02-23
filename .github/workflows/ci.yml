@@ -225,7 +225,19 @@ jobs:
         run: |
           pytest --version || true
 
-      # 11. Create Summary Issue (only on push events)
+      # 11. Install GitHub CLI (if not present)
+      - name: Install GitHub CLI
+        if: github.event_name == 'push'
+        run: |
+          if ! command -v gh &> /dev/null; then
+            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+            chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+            apt update
+            apt install gh
+          fi
+
+      # 12. Create Summary Issue (only on push events)
       - name: Create Summary Issue
         if: github.event_name == 'push'
         run: |
