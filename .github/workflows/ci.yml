@@ -225,7 +225,21 @@ jobs:
         run: |
           pytest --version || true
 
-      # 11. Create Summary Issue (only on push events)
+      # 11. Install GitHub CLI (if not present)
+      - name: Install GitHub CLI
+        if: github.event_name == 'push'
+        run: |
+          if ! command -v gh &> /dev/null; then
+            # Download and install GitHub CLI
+            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg -o /tmp/githubcli-archive-keyring.gpg
+            sudo mv /tmp/githubcli-archive-keyring.gpg /usr/share/keyrings/githubcli-archive-keyring.gpg
+            sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list
+            sudo apt update
+            sudo apt install gh
+          fi
+
+      # 12. Create Summary Issue (only on push events)
       - name: Create Summary Issue
         if: github.event_name == 'push'
         env:
@@ -252,12 +266,8 @@ jobs:
           *This issue was automatically created by the CI workflow on push to a non-main branch.*
           EOF
           
-          # Read the body and create issue using GitHub API
-          BODY=$(cat /tmp/summary_issue_body.txt)
-          TITLE="CI Summary - $BRANCH_NAME - $(date +'%Y-%m-%d')"
-          
-          curl -s -X POST \
-            -H "Authorization: token $GH_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "${{ github.api_url }}/repos/${{ github.repository }}/issues" \
-            -d "{\"title\":\"$TITLE\",\"body\":\"$BODY\"}"
+          # Create issue using GitHub CLI (properly handles escaping)
+          gh issue create \
+            --repo "${{ github.repository }}" \
+            --title "CI Summary - $BRANCH_NAME - $(date +'%Y-%m-%d')" \
+            --body-file /tmp/summary_issue_body.txt
