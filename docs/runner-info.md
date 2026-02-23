@@ -8,24 +8,24 @@
 
 ## 1. Runner Identity
 
-| Property | Value |
-|---|---|
-| **Name** | `imprunner` |
-| **Type** | Self-hosted |
-| **Runner ID** | 2 |
-| **Repository** | `Impulsleistung/T9-CTN-GenAI` |
-| **Settings URL** | `https://github.com/Impulsleistung/T9-CTN-GenAI/settings/actions/runners/2` |
-| **Last observed status** | Idle (online, no active job) |
-| **Extracted on** | 2026-02-23 13:00 CET |
+| Property                 | Value                                                                       |
+| ------------------------ | --------------------------------------------------------------------------- |
+| **Name**                 | `imprunner`                                                                 |
+| **Type**                 | Self-hosted                                                                 |
+| **Runner ID**            | 2                                                                           |
+| **Repository**           | `Impulsleistung/T9-CTN-GenAI`                                               |
+| **Settings URL**         | `https://github.com/Impulsleistung/T9-CTN-GenAI/settings/actions/runners/2` |
+| **Last observed status** | Idle (online, no active job)                                                |
+| **Extracted on**         | 2026-02-23 13:00 CET                                                        |
 
 ---
 
 ## 2. Platform Configuration
 
-| Property | Value |
-|---|---|
-| **OS** | Linux |
-| **Architecture** | x64 |
+| Property                 | Value       |
+| ------------------------ | ----------- |
+| **OS**                   | Linux       |
+| **Architecture**         | x64         |
 | **Configuration string** | `Linux x64` |
 
 ---
@@ -34,11 +34,11 @@
 
 Labels are used in workflow YAML via the `runs-on:` key to route jobs to this runner.
 
-| Label | Source |
-|---|---|
-| `self-hosted` | Built-in (always present on self-hosted runners) |
-| `Linux` | Built-in (set automatically based on OS) |
-| `X64` | Built-in (set automatically based on architecture) |
+| Label         | Source                                             |
+| ------------- | -------------------------------------------------- |
+| `self-hosted` | Built-in (always present on self-hosted runners)   |
+| `Linux`       | Built-in (set automatically based on OS)           |
+| `X64`         | Built-in (set automatically based on architecture) |
 
 ### How to target this runner in a workflow
 
@@ -99,14 +99,14 @@ This runner is referenced by the following workflow files in `.github/workflows/
 
 ## 5. Workflow Run History (as of 2026-02-23)
 
-| Run # | Event | Branch | Status | Duration |
-|---|---|---|---|---|
-| CI #6 | push (commit `6bc3ee1`) | `main` | Queued | — |
-| CI #5 | pull_request sync | `ci/improve-workflow` | Queued | — |
-| CI #4 | pull_request sync | `ci/improve-workflow` | Queued | — |
-| CI #3 | pull_request sync | `ci/improve-workflow` | Queued | — |
-| CI #2 | pull_request sync | `ci/improve-workflow` | Cancelled | 3m 24s |
-| CI #1 | pull_request open | `ci/improve-workflow` | Cancelled | 3m 43s |
+| Run # | Event                   | Branch                | Status    | Duration |
+| ----- | ----------------------- | --------------------- | --------- | -------- |
+| CI #6 | push (commit `6bc3ee1`) | `main`                | Queued    | —        |
+| CI #5 | pull_request sync       | `ci/improve-workflow` | Queued    | —        |
+| CI #4 | pull_request sync       | `ci/improve-workflow` | Queued    | —        |
+| CI #3 | pull_request sync       | `ci/improve-workflow` | Queued    | —        |
+| CI #2 | pull_request sync       | `ci/improve-workflow` | Cancelled | 3m 24s   |
+| CI #1 | pull_request open       | `ci/improve-workflow` | Cancelled | 3m 43s   |
 
 > **Note:** All completed runs were cancelled before job execution. No successful diagnostic
 > output has been captured yet. Queued runs are waiting for the runner to pick them up.
@@ -116,16 +116,16 @@ This runner is referenced by the following workflow files in `.github/workflows/
 
 ## 6. Security & Permissions Context
 
-| Setting | Value |
-|---|---|
-| **Workflow default token permissions** | Read and write |
-| **Actions can create pull requests** | Yes (enabled) |
-| **Branch ruleset on `main`** | `main-security` (Active) |
-| **Ruleset: restrict deletions** | Enabled |
-| **Ruleset: require PR before merge** | Enabled — 1 approval required |
-| **Ruleset: block force pushes** | Enabled |
+| Setting                                     | Value                             |
+| ------------------------------------------- | --------------------------------- |
+| **Workflow default token permissions**      | Read and write                    |
+| **Actions can create pull requests**        | Yes (enabled)                     |
+| **Branch ruleset on `main`**                | `main-security` (Active)          |
+| **Ruleset: restrict deletions**             | Enabled                           |
+| **Ruleset: require PR before merge**        | Enabled — 1 approval required     |
+| **Ruleset: block force pushes**             | Enabled                           |
 | **Ruleset: require code scanning (CodeQL)** | Enabled — High severity and above |
-| **Ruleset: require code quality results** | Enabled — Errors must be resolved |
+| **Ruleset: require code quality results**   | Enabled — Errors must be resolved |
 
 > The runner itself has no special security restrictions beyond the repository-level settings above.
 > It runs as a self-hosted process with whatever OS-level permissions the service account has.
