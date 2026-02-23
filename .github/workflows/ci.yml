@@ -225,18 +225,19 @@ jobs:
         run: |
           pytest --version || true
 
-      # 11. Install GitHub CLI (if not present)
+      # 11. Install GitHub CLI (if not present) - using direct binary download
       - name: Install GitHub CLI
         if: github.event_name == 'push'
         run: |
           if ! command -v gh &> /dev/null; then
-            # Download and install GitHub CLI
-            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg -o /tmp/githubcli-archive-keyring.gpg
-            sudo mv /tmp/githubcli-archive-keyring.gpg /usr/share/keyrings/githubcli-archive-keyring.gpg
-            sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
-            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list
-            sudo apt update
-            sudo apt install gh
+            # Download GitHub CLI binary directly
+            curl -fsSL https://github.com/cli/cli/releases/download/v2.68.0/gh_2.68.0_linux_amd64.tar.gz -o /tmp/gh.tar.gz
+            tar -xzf /tmp/gh.tar.gz -C /tmp
+            # Install to home directory
+            mkdir -p "$HOME/bin"
+            mv /tmp/gh_2.68.0_linux_amd64/bin/gh "$HOME/bin/gh"
+            chmod +x "$HOME/bin/gh"
+            echo "$HOME/bin" >> $GITHUB_PATH
           fi
 
       # 12. Create Summary Issue (only on push events)
