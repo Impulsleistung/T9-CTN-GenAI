@@ -235,8 +235,8 @@ jobs:
           COMMIT_MSG="${{ github.event.head_commit.message }}"
           RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           
-          # Write issue body to file
-          cat > /tmp/summary_issue_body.txt << 'ENDOFSUMMARY'
+          # Create issue body using heredoc to properly handle special characters
+          tee /tmp/summary_issue_body.txt > /dev/null << EOF
           ## CI Summary Report
 
           **Branch:** $BRANCH_NAME
@@ -248,13 +248,7 @@ jobs:
 
           ---
           *This issue was automatically created by the CI workflow on push to a non-main branch.*
-          ENDOFSUMMARY
-          
-          # Replace variables in the file
-          sed -i "s/\$BRANCH_NAME/$BRANCH_NAME/g" /tmp/summary_issue_body.txt
-          sed -i "s/\$COMMIT_SHA/$COMMIT_SHA/g" /tmp/summary_issue_body.txt
-          sed -i "s|\$COMMIT_MSG|$COMMIT_MSG|g" /tmp/summary_issue_body.txt
-          sed -i "s|\$RUN_URL|$RUN_URL|g" /tmp/summary_issue_body.txt
+          EOF
           
           # Create the issue
           gh issue create \
