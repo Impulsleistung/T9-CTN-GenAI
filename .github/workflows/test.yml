@@ -1,5 +1,6 @@
 # Simple test workflow
 name: Test Runner
+permissions: {}
 
 on:
   workflow_dispatch:
