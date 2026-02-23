@@ -1,0 +1,16 @@
+# Simple test workflow
+name: Test Runner
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: imprunner
+    steps:
+      - name: Test step
+        run: |
+          echo "Testing runner..."
+          echo "Hostname: $(hostname)"
+          echo "OS: $(uname -a)"
+          echo "Done!"
