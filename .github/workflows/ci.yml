@@ -217,11 +217,13 @@ jobs:
           if [ -f pyproject.toml ]; then pip install -e .; fi
 
       - name: Lint with flake8
+        id: lint
         run: |
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics || true
 
       - name: Run tests with pytest
+        id: tests
         run: |
           pytest --version || true
 
@@ -252,6 +254,9 @@ jobs:
           COMMIT_MSG="${{ github.event.head_commit.message }}"
           RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           
+          # Get job status
+          JOB_STATUS="${{ job.status }}"
+          
           # Create issue body using heredoc to properly handle special characters
           tee /tmp/summary_issue_body.txt > /dev/null << EOF
           ## CI Summary Report
@@ -262,6 +267,13 @@ jobs:
 
           ### Commit Message
           $COMMIT_MSG
+
+          ### Check Results
+
+          | Check | Status |
+          |-------|--------|
+          | Diagnostics | ${{ needs.diagnostics.result }} |
+          | Lint & Tests | ${{ job.status }} |
 
           ---
           *This issue was automatically created by the CI workflow on push to a non-main branch.*
