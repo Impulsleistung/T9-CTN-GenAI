@@ -45,4 +45,4 @@ On each push to a non-main branch, the workflow creates a GitHub issue with:
 
 ---
 
-For more details, see the workflow file: `.github/workflows/ci.yml`
+For more details, see the workflow file: [.github/workflows/ci.yml](.github/workflows/ci.yml)
