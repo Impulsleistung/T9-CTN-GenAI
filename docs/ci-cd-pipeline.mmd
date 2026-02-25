@@ -1,0 +1,61 @@
+flowchart TB
+    subgraph Triggers["Triggers"]
+        A["Push to main"] --> CI
+        B["PR to main"] --> CI
+        C["Manual Dispatch"] --> CI
+    end
+
+    subgraph CI["CI Pipeline on imprunner"]
+        D["Diagnostics Job"] --> E{"Job"}
+        E -->|Success| F["CI Job"]
+        
+        subgraph Diagnostics["Diagnostics (Optional)"]
+            D1["System Info"] 
+            D2["CPU/Memory"] 
+            D3["Docker Info"] 
+            D4["Python Info"] 
+            D5["Git Info"] 
+            D6["Tools Check"] 
+            D7["Disk Space"] 
+            D8["Env Vars"]
+        end
+        
+        D --> D1
+        D --> D2
+        D --> D3
+        D --> D4
+        D --> D5
+        D --> D6
+        D --> D7
+        D --> D8
+        
+        subgraph CI_Job["CI Job"]
+            F1["Checkout Code"]
+            F2["Setup Python 3.11"]
+            F3["Install Dependencies"]
+            F4["Lint with flake8"]
+            F5["Run pytest"]
+        end
+        
+        F --> F1
+        F1 --> F2
+        F2 --> F3
+        F3 --> F4
+        F4 --> F5
+    end
+
+    subgraph Results["Results"]
+        G["Lint Results"]
+        H["Test Results"]
+        I["Code Quality Gates"]
+    end
+    
+    F4 --> G
+    F5 --> H
+    G --> I
+    H --> I
+    
+    style CI fill:#1f1f1f,stroke:#00ff00,color:#00ff00
+    style imprunner fill:#0066cc,stroke:#fff,color:#fff
+    style Triggers fill:#333,stroke:#ff9900
+    style Results fill:#333,stroke:#00ff00
