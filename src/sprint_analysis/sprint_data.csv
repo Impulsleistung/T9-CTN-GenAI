@@ -1,0 +1,11 @@
+Ticket ID,Title,Status
+TICKET-1,Implement AI model for transfer cost prediction,In Progress
+TICKET-2,Integrate GenAI API for cost analysis,Done
+TICKET-3,Create dummy dataset for sprint analysis,Done
+TICKET-4,Develop status report generator,To Do
+TICKET-5,Optimize AI model performance,In Progress
+TICKET-6,Add error handling for API calls,Blocked
+TICKET-7,Document GenAI integration process,To Do
+TICKET-8,Test sprint analysis script,In Progress
+TICKET-9,Deploy cost prediction model,Done
+TICKET-10,Review and refactor code,To Do
