@@ -21,14 +21,10 @@ flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 T9-CTN-GenAI/
 ├── src/sprint_analysis/     # Sprint analysis module
 ├── notebooks/               # Jupyter notebooks (examples)
-├── docs/                    # Documentation
-│   └── ci-cd-pipeline.png   # CI/CD pipeline diagram
 └── .github/workflows/       # CI/CD workflows
 ```
 
 ## CI/CD Architecture
-
-![CI/CD Pipeline](docs/ci-cd-pipeline.png)
 
 ### Pipeline Details
 
@@ -50,4 +46,3 @@ T9-CTN-GenAI/
 ## Development
 
 - Python 3.11+
-- See [docs/runner-info.md](docs/runner-info.md) for runner details
